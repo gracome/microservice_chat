@@ -28,10 +28,10 @@ const sequelize = new Sequelize('users', 'postgres', 'omega', {
   const user = users(sequelize, DataTypes)
   const assigned= assignation(sequelize, DataTypes)
   const userChanel= user_chanel(sequelize, DataTypes)
-  sequelize.sync()
-  .then(_=>{  
-      console.log('la connexion de la base de donnée a bien été synchronisé')
-  }),
+  // sequelize.sync()
+  // .then(_=>{  
+      // console.log('la connexion de la base de donnée a bien été synchronisé')
+  // }),
 
 
   

@@ -7,14 +7,20 @@ const _ = require("lodash");
 const bcrypt= require('bcrypt');
 const jwt = require('jsonwebtoken');
 const passport = require("passport");
+const dotenv = require('dotenv');
+var http = require('http').Server(app);
+var io = require('socket.io')(http);
+
+
+
 app.use(express.json());
 
 
 const NRP = require("node-redis-pubsub");
 // NRP initialisation
 const nrp = new NRP({
-    PORT: 6379,
-    scope: "microservice"
+  url:process.env.REDIS_URL
+
 });
 require("./config/passport");
 
@@ -28,11 +34,21 @@ nrp.on("NEW_MESSAGE", data => {
 });
 app.use(passport.initialize());
 
-
+io.on('connection', () =>{
+  console.log('a user is connected')
+ })
 require('./src/customer/customer-route').config(app)
 require('./src/chats/chat.routes').config(app)
 require('./src/messages/messages_routes').config(app)
 require('./src/users/users_routes').config(app)
 app.listen(port, () => {
   console.log(`App is running on port ${port}.`);
-});
+
+
+  
+},
+
+function(){
+  nrp.emit("NEW_MESSAGE", "bons");
+}
+);

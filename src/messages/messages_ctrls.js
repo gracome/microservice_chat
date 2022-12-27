@@ -19,6 +19,14 @@ exports.create = async (req, res) => {
 
 
     }
+
+    var messages = new model(req.body);
+    messages.save((err) =>{
+      if(err)
+        res.status(500);
+      io.emit('message', req.body);
+      res.status(200);
+    })
 }
 exports.delete = async (req, res) => {
     try {
