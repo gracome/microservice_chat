@@ -92,6 +92,7 @@ exports.findByPk = async (req, res) => {
     try {
         const message = `une conversation a bien été retrouver.`
         var records = await model.findByPk(req.body);
+        
         if (_.isArray(records)) {
             res.json({ message, data: records })
         } else {

@@ -94,6 +94,23 @@ exports.findByPk = async (req, res) => {
      
     }
 }
+
+exports.findByChat = async (req, res) => {
+    try {
+        const message = `un message a bien été retrouver.`
+        var records = await model.findByChat(req.body);
+        if (_.isArray(records)) {
+            res.json({ message, data: records })
+        } else {
+            res.json({ error: errorMessage  })
+        }
+    } catch (error) {
+        console.error(error)
+        res.status(500).json({ error: errorMessage  })
+
+     
+    }
+}
 exports.readMessage = async (req, res) => {
     try {
         const message = `Le message a bien été lu.`

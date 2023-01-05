@@ -1,9 +1,8 @@
 module.exports = (sequelize, DataTypes) => {
     return sequelize.define('channel', {
       id: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.UUID,
         primaryKey: true,
-        autoIncrement: true
       },
       name: {
         type: DataTypes.STRING,

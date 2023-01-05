@@ -1,18 +1,19 @@
 const sequelize = require('../db/sequelize');
 const _ = require('lodash');
 const conversations =require ('./chat');
+const { v4: uuidv4 } = require('uuid');
 
 
 
 module.exports.create = async(data) => {
       try {
-        
-        var records= await sequelize.query(`INSERT INTO conversations (agent_id, channel_id, customer_id, created_date, opened_date, closed_date) VALUES ($1,$2,$3,$4,$5,$6)` ,
+        var id= uuidv4();
+        var records= await sequelize.query(`INSERT INTO conversations ("id","agent_id", "channel_id", "customer_id", "created_date", "opened_date", "closed_date") VALUES ($1,$2,$3,$4,$5,$6,$7)` ,
         {
-          bind: [data.agent_id, data.channel_id, data.customer_id, data.created_date, data.opened_date, data.closed_date],
+          bind: [id, data.agent_id, data.channel_id, data.customer_id, new Date, new Date, new Date],
         }
         );
-        return records;
+        return id;
       } catch (error) {
           console.error(error);
           throw error;
@@ -73,12 +74,14 @@ module.exports.findAll =async (data) => {
 module.exports.findByPk = async(data) => {
       try {
       
-        var records= await sequelize.query(`SELECT * FROM conversations WHERE conversations.id = $1 ` ,
-      {
-        bind:[data.id]
-      }
+        var records= await sequelize.query(
+           `SELECT "conversations".*, "customers"."username",(SELECT "message" FROM "messages" WHERE "messages"."chat_id"="conversations"."id" order by "messages"."createdAt" desc limit 1) AS "last_message", (SELECT "created_at" FROM "messages" WHERE "messages"."chat_id"="conversations"."id" order by "messages"."createdAt" desc limit 1) AS "message_date" FROM "conversations", "utilisateurs", "customers" WHERE "conversations"."agent_id"="utilisateurs"."id" AND "conversations"."customer_id"="customers"."id" AND "utilisateurs"."id" =$1 `,
+          {
+              bind: [data.id],
+          }
+      );
         
-        );
+        
         return records;
     } catch (error) {
         console.error(error);
@@ -102,31 +105,67 @@ module.exports.findListBy = async(data) => {
 }
 };
 
-module.exports.assigned_to_users = async(data) => {
-  try {
-   
-    var records= await sequelize.query(`INSERT INTO assignations (chat_id,user_id, agent_Response_date, end_date) VALUES ($1,$2,$3,$4)` ,
-    {
-      bind: [data.conversation_id, data.user_id, data.agent_Response_date, data.end_date],
-    }
-    );
-    return records;
-  } catch (error) {
-      console.error(error);
-      throw error;
+module.exports.assign = async () => {
+  // Assignment process
+  // The conversation is assigned to an agent which is active and have the
+  // lowest rate of open conversations
+  // Checking if there is an agent which is active and have no conversations yet
+  let active = await sequelize.query(
+      `SELECT "utilisateurs"."id", "utilisateurs"."username" FROM "utilisateurs"
+          WHERE "utilisateurs"."status"=true and "utilisateurs"."id" not in
+              (SELECT "utilisateurs"."id" FROM "utilisateurs", "conversations"
+                      WHERE "utilisateurs"."id"="conversations"."agent_id" and "utilisateurs"."status"=true
+                      AND "conversations"."closed_date" is  NULL
+                      GROUP BY "utilisateurs"."id")
+          limit 1;`,
+      {
+          bind: []
+      }
+  );
+  // If an agent is found , return him for assignation
+  if (active[0][0] !== undefined)
+      return active[0][0].id;
+  else
+  {
+      // Search active agents with the low conversation rates
+      let search = await sequelize.query(
+          `SELECT "utilisateurs"."id", "utilisateurs"."username", COUNT(*) AS "nbre_chats" FROM "utilisateurs", "conversations"
+              WHERE "utilisateurs"."id"="conversations"."agent_id" AND "utilisateurs"."status"=true
+              AND "conversations"."closed_date" is NULL
+              GROUP BY "utilisateurs"."id", "utilisateurs"."username"
+              ORDER BY "nbre_chats" asc LIMIT 1`,
+          {
+              bind: []
+          }
+      );
+      // Saving the agent id and return it
+      const agent = search[0][0];
+      return agent.id;
   }
 };
 
+module.exports.isChatOpened = async (id) => {
+    const result = await sequelize.query(`SELECT * FROM "conversations" WHERE "conversations"."customer_id"=$1 AND
+                        "conversation"."closed_date" is null`,
+    {
+        bind: [id]
+    });
+    // If chat is opened send true
+    if (result[0].length > 0)
+        return result[0][0].id;
+    else
+        return null;
+}
 
 module.exports.openChat = async (data) => {
   try {
-    const message = `Le message est bien ouvert.`
+    const message = `La conversation est bien ouvert.`
      
       if (conversations.status == false) {
           
-          let records= await sequelize.query('UPDATE conversations SET opened_date= $1 WHERE id= $2 ',
+          let records= await sequelize.query('UPDATE conversations SET opened_date=$1 WHERE id=$2 ',
               {
-                  bind: [data.opened_date, data.id]
+                  bind: [new Date, data.id]
               }
           );
           return records
@@ -147,12 +186,12 @@ module.exports.closeChat = async (data) => {
           
           let records= await sequelize.query('UPDATE conversations SET closed_date= $1 WHERE id= $2 ',
               {
-                  bind: [data.closed_date, data.id]
+                  bind: [new Date, data.id]
               }
           );
           return records
       } else {
-          return 'La conversation déja est fermée'
+          return 'La conversation est déja  fermée'
          
       }
    }catch (error) {

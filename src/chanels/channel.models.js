@@ -1,11 +1,14 @@
 const sequelize = require('../db/sequelize');
 const _ = require('lodash');
+const { v4: uuidv4 } = require('uuid');
+
 
 module.exports.create = async (data) => {
   try {
-    var records = await sequelize.query(`INSERT INTO channels (name) VALUES ($1)`,
+    var id= uuidv4();
+    var records = await sequelize.query(`INSERT INTO channels ("id", "name", "createdAt", "updatedAt") VALUES ($1, $2, $3,$4)`,
       {
-        bind: [data.name],
+        bind: [id, data.name, new Date, new Date]
       }
     );
     return records;
@@ -60,14 +63,15 @@ module.exports.findAll = async (data) => {
 
 module.exports.findByPK = async (data) => {
   try {
-    let records = await sequelize.query(`SELECT * FROM channels WHERE channels.name = $1 `,
+    var id= uuidv4();
+    let records = await sequelize.query(`SELECT ("id") FROM channels WHERE channels.id=$1 `,
       {
-        bind: [data.name]
+        bind: [data.id]
       }
 
     );
 
-    return records;
+    return id;
   } catch (error) {
     console.error(error);
     throw error;

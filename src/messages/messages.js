@@ -6,15 +6,14 @@ const users= require('../users/user')
 module.exports = (sequelize, DataTypes) => {
     return sequelize.define('messages', {
       id: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.UUID,
         primaryKey: true,
-        autoIncrement: true
       },
       sender_id: {
-        type: DataTypes.STRING,
+        type: DataTypes.UUID,
       },
       chat_id: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.UUID,
         FOREIGNKEY: (conversations.id),REFERENCES: conversations
       },
       message: {
@@ -22,7 +21,7 @@ module.exports = (sequelize, DataTypes) => {
       },
      
       user_id: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.UUID,
         FOREIGNKEY: (users.id),REFERENCES: users
       },
       is_readed: {

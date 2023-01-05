@@ -4,17 +4,19 @@ const _= require('lodash');
 const { bind } = require('lodash');
 const User = sequelize.models.users;
 const jwt = require('jsonwebtoken')
+const { v4: uuidv4 } = require('uuid');
 
 
 
 module.exports.create = async (data) => {
     try {
+        var id= uuidv4();
         let hashedPassword = await this.hashPassword(data.password);
 
 
-         let records = await sequelize.query(`INSERT INTO utilisateurs (username, role,password) VALUES ($1,$2,$3)`,
+         let records = await sequelize.query(`INSERT INTO utilisateurs ("id", "username", "role","password", "createdAt", "updatedAt") VALUES ($1,$2,$3,$4,$5,$6)`,
             {
-                bind: [data.username,data.role, hashedPassword],
+                bind: [id, data.username,data.role, hashedPassword, new Date, new Date],
             }
         );
 

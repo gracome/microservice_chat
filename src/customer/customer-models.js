@@ -1,19 +1,19 @@
 const sequelize = require('../db/sequelize')
 const _ = require('lodash')
+const { v4: uuidv4 } = require('uuid');
 
 
 module.exports.create = async (data) => {
     try {
-        
-        var records = await sequelize.query(`INSERT INTO customers (username) VALUES ($1)`,
+        var id= uuidv4();
+        var records = await sequelize.query(`INSERT INTO customers ("id", "username", "social_id", "createdAt", "updatedAt") VALUES ($1, $2, $3, $4, $5)`,
             {
-                bind: [data.username],
+                bind: [id, data.username, data.social_id, new Date(), new Date()],
             }
         );
-        return records;
+        return id;
     } catch (error) {
         console.error(error)
-        res.status(500).json({ error: message })
     }
 }
 
@@ -48,10 +48,10 @@ module.exports.findAll =async (data) => {
         res.status(500).json({ error: message })
     }
 }
-module.exports.findByPk =async (data) => {
+module.exports.findByPk =async () => {
       try {
        
-        var records= await sequelize.query(`SELECT * FROM customers`
+        var records= await sequelize.query(`SELECT ("id", "username") FROM customers`
      
         );
         return records;
