@@ -78,39 +78,19 @@ exports.findAll = async (req, res) => {
     }
 }
 
-exports.findByPk = async (req, res) => {
+
+exports.getMessages = async (req, res) => {
+    const chatId = req.params.chatId;
+    console.log("jjj",chatId);
     try {
-        const message = `un message a bien été retrouver.`
-        var records = await model.findByPk(req.body);
-        if (_.isArray(records)) {
-            res.json({ message, data: records })
-        } else {
-            res.json({ error: errorMessage  })
-        }
+      const messages = await model.getMessages(chatId);
+      res.send(messages);
     } catch (error) {
-        console.error(error)
-        res.status(500).json({ error: errorMessage  })
-
-     
+      console.error(error);
+      res.status(500).send(error);
     }
-}
+  };
 
-exports.findByChat = async (req, res) => {
-    try {
-        const message = `un message a bien été retrouver.`
-        var records = await model.findByChat(req.body);
-        if (_.isArray(records)) {
-            res.json({ message, data: records })
-        } else {
-            res.json({ error: errorMessage  })
-        }
-    } catch (error) {
-        console.error(error)
-        res.status(500).json({ error: errorMessage  })
-
-     
-    }
-}
 exports.readMessage = async (req, res) => {
     try {
         const message = `Le message a bien été lu.`

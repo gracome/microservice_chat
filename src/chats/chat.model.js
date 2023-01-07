@@ -8,9 +8,9 @@ const { v4: uuidv4 } = require('uuid');
 module.exports.create = async(data) => {
       try {
         var id= uuidv4();
-        var records= await sequelize.query(`INSERT INTO conversations ("id","agent_id", "channel_id", "customer_id", "created_date", "opened_date", "closed_date") VALUES ($1,$2,$3,$4,$5,$6,$7)` ,
+        var records= await sequelize.query(`INSERT INTO conversations ("id","agent_id", "channel_id", "customer_id", "created_date", "opened_date") VALUES ($1,$2,$3,$4,$5,$6)` ,
         {
-          bind: [id, data.agent_id, data.channel_id, data.customer_id, new Date, new Date, new Date],
+          bind: [id, data.agent_id, data.channel_id, data.customer_id, new Date, new Date],
         }
         );
         return id;
@@ -145,8 +145,8 @@ module.exports.assign = async () => {
 };
 
 module.exports.isChatOpened = async (id) => {
-    const result = await sequelize.query(`SELECT * FROM "conversations" WHERE "conversations"."customer_id"=$1 AND
-                        "conversation"."closed_date" is null`,
+    console.log(id);
+    const result = await sequelize.query(`SELECT * FROM "conversations" WHERE "conversations"."customer_id"=$1 AND "conversations"."closed_date" is null`,
     {
         bind: [id]
     });

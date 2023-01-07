@@ -33,78 +33,83 @@ var config = {
 var nrp = new NRP(config);
 
 
+
 nrp.on("NEW_MESSAGE", async (data)=> {
- var newCustomer;
-try {
-  console.log(data.send_id);
-var reco =  sequelize.query(`SELECT * FROM customers WHERE customers.social_id=$1` ,
-{
-  bind: [ data.send_id],
-} 
-);
+  const customerExists = await customer.exists(data.send_id);
 
- console.log(reco);
-  
-  if( reco.data === undefined){
-    newCustomer= '';
-  }else 
- console.log (reco.data[0][0].id) 
- } catch (error) {
-   console.error(error);
-   throw error;
-}
-  
-if(newCustomer=== ''){
-  // create customer
-  const customer_datas= {
-    username: data.profile.first_name + ' ' + data.profile.last_name,
-    social_id: data.send_id
-  }
-const newCus = await customer.create(customer_datas);
-console.log(newCus);
-  // assignation process
-   const agent_id = await assignation.assign();
-   console.log(",,,dd", agent_id); ;  
-  // create chat
-  const chat_datas= {
-agent_id: agent_id,
-channel_id: "73564b12-a136-4695-8adc-a3952b8f8bad",
-customer_id: newCus,
+  if (!customerExists) {
+    // Crée le client s'il n'existe pas déjà
+    const customerData = {
+      username: data.profile.first_name + ' ' + data.profile.last_name,
+      social_id: data.send_id
+    };
+    const newCustomer = await customer.create(customerData);
 
-  }
-const newChat = await chats.create(chat_datas)
-  // create message
+    // Assignation de l'agent
+    const agentId = await assignation.assign();
 
-mess_data= {
-  sender_id: newCus,
-  chat_id: newChat,
-  message: data.msg,
-  user_id: agent_id,
-  is_readed: "false"
+    // Crée la conversation
+    const chatData = {
+      agent_id: agentId,
+      channel_id: "73564b12-a136-4695-8adc-a3952b8f8bad",
+      customer_id: newCustomer,
+    };
+    const newChat = await chats.create(chatData);
 
-}
-const newMessage= await messages.create(mess_data)
-}else{
-  if(chats.isChatOpened=== true){
-    const agent_id = await assignation.assign();
-    message_data= {
+    // Crée le message
+    const messageData = {
       sender_id: newCustomer,
-      chat_id: chats.isChatOpened(),
+      chat_id: newChat,
       message: data.msg,
-      user_id: agent_id
-    }
-    const addMessage= await messages.create(message_data)
-  } else {
-  
-    const agent_id = await assignation.assign();
-    addChat_data= {
+      user_id: agentId,
+      is_readed: "false"
+    };
+    const newMessage = await messages.create(messageData);
+  }else{
+  const cus= await messages.cus(data.send_id);
+
+  // Récupère l'identifiant de la conversation ouverte pour le client, s'il y en a une
+const openedChatId = await chats.isChatOpened(cus);
+// Si une conversation est ouverte
+if (openedChatId !== null) {
+  // Récupère l'identifiant de l'agent assigné
+  const agent_id = await assignation.assign();
+  // Crée un nouveau message
+  const message_data = {
+    sender_id: cus,
+    chat_id: openedChatId, // Utilise l'identifiant de la conversation ouverte
+    message: data.msg,
+    user_id: agent_id
+    
+  };
+  console.log("jj", message_data.user_id);
+  // Ajoute le nouveau message à la conversation
+  const addMessage = await messages.create(message_data);
+ 
+}
+// Si aucune conversation n'est ouverte
+else {
+  // Récupère l'identifiant de l'agent assigné
+  const agent_id = await assignation.assign();
+  // Crée une nouvelle conversation
+  const addChat_data = {
     agent_id: agent_id,
     channel_id: "73564b12-a136-4695-8adc-a3952b8f8bad",
-    customer_id: newCustomer,
-  }
-
+    customer_id: cus
+  };
   const addChat = await chats.create(addChat_data);
-  
+  // Crée un nouveau message dans la nouvelle conversation
+  const message_data = {
+    sender_id: cus,
+    chat_id: addChat, // Utilise l'identifiant de la nouvelle conversation
+    message: data.msg,
+    user_id: agent_id
+  };
+
+  const newMessage = await messages.create(message_data);
+  console.log("ttt", newMessage);
+
+
 }
 }
 

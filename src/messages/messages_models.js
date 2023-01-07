@@ -2,7 +2,7 @@ const sequelize = require('../db/sequelize')
 const _= require('lodash')
 const { v4: uuidv4 } = require('uuid');
 
-
+const Message = require('./messages');
 
 
 module.exports.create = async (data) => {
@@ -69,36 +69,23 @@ module.exports.create = async (data) => {
       }
   };
   
-  module.exports.findByChat = async (data) =>{
-    try {
-            
-      var records= await sequelize.query(`SELECT "message" FROM messages WHERE messages."chat_id" = $1 ` ,
-    {
-      bind: [data.chat_id]
-    }
-      );
-      return records;
-} catch (error) {
-  console.error(error);
-  throw error;
-}
-};
   
 
-//       module.exports.findByPk = async(data) => {
-//           try {
-            
-//             var records= await sequelize.query(`SELECT * FROM messages WHERE messages.id = $1 ` ,
-//           {
-//             bind: [data.id]
-//           }
-//             );
-//             return records;
-//     } catch (error) {
-//         console.error(error);
-//         throw error;
-//     }
-// };
+
+
+     
+exports.getMessages = async (chatId) => {
+  try {
+    
+  var records= await sequelize.query(`SELECT "sender_id","user_id", "chat_id", "message" FROM messages WHERE "messages"."chat_id" = $1 ORDER BY "messages"."createdAt" ASC`, {
+  bind: [chatId],
+});
+return records;
+} catch (error) {
+console.error(error);
+throw error;
+}
+};
 
 
 module.exports.readMessage = async(data) => {
@@ -113,6 +100,22 @@ module.exports.readMessage = async(data) => {
 } catch (error) {
 console.error(error);
 throw error;
+}
+};
+
+module.exports.cus = async(id) => {
+try {
+    var reco =  await sequelize.query(`SELECT * FROM "customers" WHERE "customers"."social_id"=$1` ,
+    {
+      bind: [ id],
+    } 
+  );
+
+  
+ return reco[0][0].id ;
+ } catch (error) {
+   console.error(error);
+   throw error;
 }
 };
 

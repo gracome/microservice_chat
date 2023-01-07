@@ -14,9 +14,9 @@ module.exports.create = async (data) => {
         let hashedPassword = await this.hashPassword(data.password);
 
 
-         let records = await sequelize.query(`INSERT INTO utilisateurs ("id", "username", "role","password", "createdAt", "updatedAt") VALUES ($1,$2,$3,$4,$5,$6)`,
+         let records = await sequelize.query(`INSERT INTO utilisateurs ("id", "username","nom", "prenom", "email", "role","password", "createdAt", "updatedAt") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
             {
-                bind: [id, data.username,data.role, hashedPassword, new Date, new Date],
+                bind: [id, data.username, data.firstname, data.lastname, data.email, data.role, hashedPassword, new Date, new Date],
             }
         );
 
